@@ -54,7 +54,7 @@ void readGraph(Graph *g, const char *file) {
 		int a, b;
 		fscanf(f, "%d%d", &a, &b);
 		g->adjacency_matrix[--a][--b] = 1;
-		g->adjacency_matrix[a][b] = 1;
+		g->adjacency_matrix[b][a] = 1;
 	}
 	fclose(f);
 }
@@ -117,7 +117,7 @@ int main() {
 				// cross : dfs1 < dfs2 && dfsc1 < dfsc2
 				int dfs1 = markers[i].dfs, dfs2 = markers[j].dfs, 
 				dfsc1 = markers[i].dfsc, dfsc2 = markers[j].dfsc;
-				printf("\n(%d, %d) is a ", i + 1, j + 1);
+				printf("\n(%2d, %2d) is a ", i + 1, j + 1);
 				if(dfs1 < dfs2 && dfsc1 > dfsc2) {
 					printf("forward");
 				} else if(dfs1 > dfs2 && dfsc1 < dfsc2) {
