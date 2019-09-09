@@ -87,7 +87,7 @@ Polynomial poly_add(Polynomial p1, Polynomial p2) {
 			res.terms[k] = p1.terms[i];
 			i++;
 		} else {
-			res.terms[k] = p2.terms[i];
+			res.terms[k] = p2.terms[j];
 			j++;
 		}
 		k++;
