@@ -62,16 +62,14 @@ Matrix ordered_transpose(Matrix sparse) {
 	transpose.mat[0][2] = sparse.mat[0][2];
 	int ptr = 1;
 	for(int j = 0; j < sparse.mat[0][1]; j++) {
-		for(int i = 0; i < sparse.mat[0][0];i++) {
+		for(int i = 1; i < sparse.r;i++) {
 			// Check if (i, j) exists in the sparse
-			for(int k = 1; k < sparse.r;k++) {
-				if(sparse.mat[k][0] == i && sparse.mat[k][1] == j) {
-					// it does. so put (j, i) in transpose
-					transpose.mat[ptr][0] = j;
-					transpose.mat[ptr][1] = i;
-					transpose.mat[ptr][2] = sparse.mat[k][2];
-					ptr++;
-				}
+			if(sparse.mat[i][1] == j) {
+				// it does. so put (j, i) in transpose
+				transpose.mat[ptr][0] = j;
+				transpose.mat[ptr][1] = sparse.mat[i][0];
+				transpose.mat[ptr][2] = sparse.mat[i][2];
+				ptr++;
 			}
 		}
 	}
