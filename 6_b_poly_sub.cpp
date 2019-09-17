@@ -88,6 +88,7 @@ Polynomial poly_sub(Polynomial p1, Polynomial p2) {
 			i++;
 		} else {
 			res.terms[k] = p2.terms[j];
+			res.terms[k].coeff *= -1; // negate the second term if the first one is zero
 			j++;
 		}
 		k++;
