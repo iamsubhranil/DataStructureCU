@@ -3,15 +3,15 @@
 #include <stdlib.h>
 
 typedef struct PolyNode {
-	int coeff, exp;
+	int       coeff, exp;
 	PolyNode *next;
 } PolyNode;
 
-PolyNode* poly_create(int coeff, int exp) {
-	PolyNode *node = (PolyNode*)malloc(sizeof(PolyNode));
-	node->coeff = coeff;
-	node->exp = exp;
-	node->next = NULL;
+PolyNode *poly_create(int coeff, int exp) {
+	PolyNode *node = (PolyNode *)malloc(sizeof(PolyNode));
+	node->coeff    = coeff;
+	node->exp      = exp;
+	node->next     = NULL;
 	return node;
 }
 
@@ -19,7 +19,7 @@ void poly_insert_into(PolyNode **head, PolyNode *next) {
 	while(*head != NULL) {
 		if((*head)->exp < next->exp) {
 			next->next = (*head);
-			*head = next;
+			*head      = next;
 			return;
 		} else if((*head)->exp == next->exp) {
 			(*head)->coeff += next->coeff;
@@ -31,9 +31,9 @@ void poly_insert_into(PolyNode **head, PolyNode *next) {
 	*head = next;
 }
 
-void poly_print(PolyNode* p) {
+void poly_print(PolyNode *p) {
 	PolyNode *head = p;
-	if(head  != NULL) {
+	if(head != NULL) {
 		printf("%2dx%-2d ", head->coeff, head->exp);
 		head = head->next;
 	}
@@ -43,7 +43,7 @@ void poly_print(PolyNode* p) {
 	}
 }
 
-PolyNode* poly_input(bool fromFile, const char *fileName) {
+PolyNode *poly_input(bool fromFile, const char *fileName) {
 	FILE *f;
 	if(fromFile) {
 		f = fopen(fileName, "r");
@@ -54,12 +54,12 @@ PolyNode* poly_input(bool fromFile, const char *fileName) {
 	} else {
 		f = stdin;
 	}
-	int no, coeff, exp;
+	int       no, coeff, exp;
 	PolyNode *head = NULL;
 	if(!fromFile)
 		printf("Enter number of terms : ");
 	fscanf(f, "%d", &no);
-	for(int i = 0;i < no;i++){
+	for(int i = 0; i < no; i++) {
 		if(!fromFile)
 			printf("Enter coefficient and exponent of term %d : ", i + 1);
 		fscanf(f, "%d%d", &coeff, &exp);
@@ -70,23 +70,23 @@ PolyNode* poly_input(bool fromFile, const char *fileName) {
 	return head;
 }
 
-PolyNode* poly_add(PolyNode *p1, PolyNode *p2) {
+PolyNode *poly_add(PolyNode *p1, PolyNode *p2) {
 	PolyNode *head = NULL;
 	while(p1 != NULL && p2 != NULL) {
 		int coeff, exp;
 		if(p1->exp == p2->exp) {
 			coeff = p1->coeff + p2->coeff;
-			exp = p1->exp;
-			p1 = p1->next;
-			p2 = p2->next;
+			exp   = p1->exp;
+			p1    = p1->next;
+			p2    = p2->next;
 		} else if(p1->exp > p2->exp) {
 			coeff = p1->coeff;
-			exp = p1->exp;
-			p1 = p1->next;
+			exp   = p1->exp;
+			p1    = p1->next;
 		} else {
 			coeff = p2->coeff;
-			exp = p2->exp;
-			p2 = p2->next;
+			exp   = p2->exp;
+			p2    = p2->next;
 		}
 		poly_insert_into(&head, poly_create(coeff, exp));
 	}
@@ -103,11 +103,11 @@ PolyNode* poly_add(PolyNode *p1, PolyNode *p2) {
 
 void poly_print_upto(int max, int min, PolyNode *p2) {
 	int first = 0;
-	for(int i = max;i >= min && p2 != NULL;i--) {
+	for(int i = max; i >= min && p2 != NULL; i--) {
 		int coeff = 0;
 		if(p2->exp == i) {
 			coeff = p2->coeff;
-			p2 = p2->next;
+			p2    = p2->next;
 		}
 		if(first) {
 			printf(" + ");
@@ -117,9 +117,10 @@ void poly_print_upto(int max, int min, PolyNode *p2) {
 	}
 }
 
-void poly_print_aligned(PolyNode *p1, PolyNode *p2, PolyNode *res, const char sign) {
+void poly_print_aligned(PolyNode *p1, PolyNode *p2, PolyNode *res,
+                        const char sign) {
 	PolyNode *tp1 = p1, *tp2 = p2;
-	int max = p1->exp > p2->exp ? p1->exp : p2->exp;
+	int       max = p1->exp > p2->exp ? p1->exp : p2->exp;
 	while(tp1->next != NULL) tp1 = tp1->next;
 	while(tp2->next != NULL) tp2 = tp2->next;
 	int min = tp1->exp < tp2->exp ? tp1->exp : tp2->exp;
@@ -132,8 +133,8 @@ void poly_print_aligned(PolyNode *p1, PolyNode *p2, PolyNode *res, const char si
 }
 
 int main() {
-	PolyNode* p1 = poly_input(true, "poly1.txt");
-	PolyNode* p2 = poly_input(true, "poly2.txt");
+	PolyNode *p1  = poly_input(true, "poly1.txt");
+	PolyNode *p2  = poly_input(true, "poly2.txt");
 	PolyNode *sum = poly_add(p1, p2);
 	poly_print_aligned(p1, p2, sum, '+');
 }

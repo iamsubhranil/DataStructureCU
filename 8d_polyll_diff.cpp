@@ -3,15 +3,15 @@
 #include <stdlib.h>
 
 typedef struct PolyNode {
-	int coeff, exp;
+	int       coeff, exp;
 	PolyNode *next;
 } PolyNode;
 
-PolyNode* poly_create(int coeff, int exp) {
-	PolyNode *node = (PolyNode*)malloc(sizeof(PolyNode));
-	node->coeff = coeff;
-	node->exp = exp;
-	node->next = NULL;
+PolyNode *poly_create(int coeff, int exp) {
+	PolyNode *node = (PolyNode *)malloc(sizeof(PolyNode));
+	node->coeff    = coeff;
+	node->exp      = exp;
+	node->next     = NULL;
 	return node;
 }
 
@@ -19,7 +19,7 @@ void poly_insert_into(PolyNode **head, PolyNode *next) {
 	while(*head != NULL) {
 		if((*head)->exp < next->exp) {
 			next->next = (*head);
-			*head = next;
+			*head      = next;
 			return;
 		} else if((*head)->exp == next->exp) {
 			(*head)->coeff += next->coeff;
@@ -31,9 +31,9 @@ void poly_insert_into(PolyNode **head, PolyNode *next) {
 	*head = next;
 }
 
-void poly_print(PolyNode* p) {
+void poly_print(PolyNode *p) {
 	PolyNode *head = p;
-	if(head  != NULL) {
+	if(head != NULL) {
 		printf("%2dx%-2d ", head->coeff, head->exp);
 		head = head->next;
 	}
@@ -43,7 +43,7 @@ void poly_print(PolyNode* p) {
 	}
 }
 
-PolyNode* poly_input(bool fromFile, const char *fileName) {
+PolyNode *poly_input(bool fromFile, const char *fileName) {
 	FILE *f;
 	if(fromFile) {
 		f = fopen(fileName, "r");
@@ -54,12 +54,12 @@ PolyNode* poly_input(bool fromFile, const char *fileName) {
 	} else {
 		f = stdin;
 	}
-	int no, coeff, exp;
+	int       no, coeff, exp;
 	PolyNode *head = NULL;
 	if(!fromFile)
 		printf("Enter number of terms : ");
 	fscanf(f, "%d", &no);
-	for(int i = 0;i < no;i++){
+	for(int i = 0; i < no; i++) {
 		if(!fromFile)
 			printf("Enter coefficient and exponent of term %d : ", i + 1);
 		fscanf(f, "%d%d", &coeff, &exp);
@@ -70,11 +70,11 @@ PolyNode* poly_input(bool fromFile, const char *fileName) {
 	return head;
 }
 
-PolyNode* poly_diff(PolyNode *p1) {
-	PolyNode* ret = NULL;
+PolyNode *poly_diff(PolyNode *p1) {
+	PolyNode *ret = NULL;
 	while(p1 != NULL) {
 		int coeff = p1->coeff;
-		int exp = p1->exp;
+		int exp   = p1->exp;
 		if(exp != 0) {
 			coeff *= exp;
 			exp -= 1;
@@ -86,8 +86,8 @@ PolyNode* poly_diff(PolyNode *p1) {
 }
 
 int main() {
-	PolyNode* p1 = poly_input(true, "poly1.txt");
-	PolyNode *d = poly_diff(p1);
+	PolyNode *p1 = poly_input(true, "poly1.txt");
+	PolyNode *d  = poly_diff(p1);
 	printf("Given polynomial : ");
 	poly_print(p1);
 	printf("\n  Differentiated : ");

@@ -8,14 +8,14 @@ typedef struct {
 
 typedef struct {
 	Term *terms;
-	int no;
+	int   no;
 } Polynomial;
 
 Polynomial poly_new(int n) {
 	Polynomial p = {NULL, n};
-	p.terms = (Term *)malloc(sizeof(Term) * n);
+	p.terms      = (Term *)malloc(sizeof(Term) * n);
 	for(int i = 0; i < n; i++) {
-		p.terms[i] = {0};
+		p.terms[i] = {0, 0};
 	}
 	return p;
 }
@@ -25,7 +25,7 @@ Polynomial poly_input(const char *s) {
 	printf("Number of terms in the%spolynomial : ", s);
 	scanf("%d", &p.no);
 	p.terms = (Term *)malloc(sizeof(Term) * p.no);
-	for(int i = 0;i < p.no;i++) {
+	for(int i = 0; i < p.no; i++) {
 		printf("\nEnter coefficient and exponent of term %d : ", i + 1);
 		scanf("%d%d", &(p.terms[i].coeff), &(p.terms[i].exp));
 	}
@@ -34,10 +34,10 @@ Polynomial poly_input(const char *s) {
 		int changed = 0;
 		for(int j = 0; j < p.no - i - 1; j++) {
 			if(p.terms[j].exp < p.terms[j + 1].exp) {
-				Term t = p.terms[j];
-				p.terms[j] = p.terms[j + 1];
+				Term t         = p.terms[j];
+				p.terms[j]     = p.terms[j + 1];
 				p.terms[j + 1] = t;
-				changed = 1;
+				changed        = 1;
 			}
 		}
 		if(!changed)
@@ -48,7 +48,7 @@ Polynomial poly_input(const char *s) {
 
 void poly_print(Polynomial p) {
 	printf("%dx%d", p.terms[0].coeff, p.terms[0].exp);
-	for(int i = 1; i < p.no;i++) {
+	for(int i = 1; i < p.no; i++) {
 		printf(" + %dx%d", p.terms[i].coeff, p.terms[i].exp);
 	}
 }
@@ -58,7 +58,7 @@ Polynomial poly_add(Polynomial p1, Polynomial p2) {
 	// after addition
 	int num = 0, i = 0, j = 0;
 	while(i < p1.no && j < p2.no) {
-			num++;
+		num++;
 		if(p1.terms[i].exp == p2.terms[j].exp) {
 			i++;
 			j++;
@@ -75,11 +75,12 @@ Polynomial poly_add(Polynomial p1, Polynomial p2) {
 	}
 	// allocate exact amount of memory
 	Polynomial res = poly_new(num);
-	i = 0; j = 0;
-	int k = 0;
+	i              = 0;
+	j              = 0;
+	int k          = 0;
 	while(i < p1.no && j < p2.no) {
 		if(p1.terms[i].exp == p2.terms[j].exp) {
-			res.terms[k].exp = p1.terms[i].exp;
+			res.terms[k].exp   = p1.terms[i].exp;
 			res.terms[k].coeff = p1.terms[i].coeff + p2.terms[j].coeff;
 			i++;
 			j++;
@@ -103,12 +104,12 @@ Polynomial poly_add(Polynomial p1, Polynomial p2) {
 
 Polynomial poly_mult(Polynomial p1, Polynomial p2) {
 	Polynomial res = {NULL, 0};
-	for(int i = 0;i < p1.no;i++) {
+	for(int i = 0; i < p1.no; i++) {
 		Polynomial temp = poly_new(p2.no);
-		Term t = p1.terms[i];
-		for(int j = 0;j < p2.no;j++) {
+		Term       t    = p1.terms[i];
+		for(int j = 0; j < p2.no; j++) {
 			temp.terms[j].coeff = t.coeff * p2.terms[j].coeff;
-			temp.terms[j].exp = p2.terms[j].exp + t.exp;
+			temp.terms[j].exp   = p2.terms[j].exp + t.exp;
 		}
 		printf("\ntemp : ");
 		poly_print(temp);
@@ -116,17 +117,17 @@ Polynomial poly_mult(Polynomial p1, Polynomial p2) {
 		printf("\nres + temp : ");
 		poly_print(res);
 	}
-		printf("\np1 : ");
-		poly_print(p1);
-		printf("\np2 : ");
-		poly_print(p2);
-		printf("\nres : ");
-		poly_print(res);
+	printf("\np1 : ");
+	poly_print(p1);
+	printf("\np2 : ");
+	poly_print(p2);
+	printf("\nres : ");
+	poly_print(res);
 	return res;
 }
 
 void poly_print_matched(int min, int max, Polynomial p1) {
-	for(int i = max, j = 0;i >= min && j < p1.no;i--) {
+	for(int i = max, j = 0; i >= min && j < p1.no; i--) {
 		if(i != max) {
 			printf(" + ");
 		}
@@ -139,26 +140,26 @@ void poly_print_matched(int min, int max, Polynomial p1) {
 	}
 }
 
-void poly_print_tabular(Polynomial p1, Polynomial p2, Polynomial p3, const char *s) {
+void poly_print_tabular(Polynomial p1, Polynomial p2, Polynomial p3,
+                        const char *s) {
 	// find the maximum and minimum exponents
-	int max = p1.terms[0].exp > p2.terms[0].exp ? 
-				p1.terms[0].exp : p2.terms[0].exp;
-	int min = p1.terms[p1.no - 1].exp < p2.terms[p2.no - 1].exp ? 
-				p1.terms[p1.no - 1].exp : p2.terms[p2.no - 1].exp;
-				
+	int max =
+	    p1.terms[0].exp > p2.terms[0].exp ? p1.terms[0].exp : p2.terms[0].exp;
+	int min = p1.terms[p1.no - 1].exp < p2.terms[p2.no - 1].exp
+	              ? p1.terms[p1.no - 1].exp
+	              : p2.terms[p2.no - 1].exp;
+
 	int indent = 2 + strlen(s) + 1;
 	printf("\n%*s", indent, " ");
 	poly_print_matched(min, max, p1);
 	printf("\n  %s ", s);
 	poly_print_matched(min, max, p2);
 	printf("\n");
-	int line = indent + 7*(max - min) + 10;
-	while(line--)
-		printf("-");
+	int line = indent + 7 * (max - min) + 10;
+	while(line--) printf("-");
 	printf("\n");
 	printf("%*s", indent, " ");
 	poly_print(p3);
-	
 }
 
 int main() {
