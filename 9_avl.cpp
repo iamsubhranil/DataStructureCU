@@ -352,6 +352,48 @@ Avl* avl_generate_random(int elements, ValueType type) {
 	return head;
 }
 
+Avl** avl_inorder_successor(Avl **head) {
+	Avl **inorder_successor = &((*head)->right);
+	while((*inorder_successor)->left != NULL) {
+		inorder_successor = &((*inorder_successor)->left);
+	}
+	return inorder_successor;
+}
+
+void avl_delete(Avl **head) {
+	if((*head)->right != NULL && (*head)->left != NULL) {
+		Avl **successor = avl_inorder_successor(head);
+		(*head)->val = (*successor)->val;
+		Avl *del = *successor;
+		(*successor) = (*successor)->right;
+		free(del);
+	} else if((*head)->right != NULL || (*head)->left != NULL) {
+		Avl *replace = (*head)->right ? (*head)->right : (*head)->left;
+		free(*head);
+		*head = replace;
+	} else {
+		free(*head);
+		*head = NULL;
+	}
+}
+
+int avl_delete_value(Avl **head, Value val) {
+	Avl **bak = head;
+	while(*bak != NULL) {
+		int res = value_compare((*bak)->val, val);
+		if(res == 0) {
+			avl_delete(bak);
+			avl_check(head);
+			return 1;
+		} else if(res == 1) {
+			bak = &((*bak)->left);
+		} else {
+			bak = &((*bak)->right);
+		}
+	}
+	return 0;
+}
+
 Avl* avl_generate_user() {
 	Avl *head = NULL;
 	int el;
@@ -378,8 +420,16 @@ Avl* avl_generate_user() {
 }
 
 int main() {
-	Avl *head = avl_generate_random(10, Number);
+	Avl *head = avl_generate_user();
 	avl_check_balance(&head);
 	printf("\nGenerated tree : ");
+	avl_print(head);
+	printf("\nEnter value to delete : ");
+	Value del = value_input(head->val.type);
+	if(avl_delete_value(&head, del)) {
+		printf("\nValue deleted successfully!");
+	} else {
+		printf("\nValue not found in the tree!");
+	}
 	avl_print(head);
 }
