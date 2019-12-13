@@ -182,6 +182,21 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode
     }
 }
 
+TwoThreeNode* ttn_search_parent(TwoThreeNode *root, int val) {
+    TwoThreeNode *present = root, *parent = NULL;
+    while(present->type == INTERNAL) {
+        parent = present;
+        if(val <= parent->l) {
+            present = parent->children[0];
+        } else if(val <= parent->m || parent->numchild == 2) {
+            present = parent->children[1];
+        } else {
+            present = parent->children[2];
+        }
+    }
+    return parent;
+}
+
 void ttn_insert(TwoThreeNode **root, int val) {
     if(*root == NULL) { // tree contains no children
         *root = ttn_create_leaf(val);
@@ -202,17 +217,7 @@ void ttn_insert(TwoThreeNode **root, int val) {
         (*root)->numchild = 2;
         (*root)->highestFromRight = middle->val;
     } else {
-        TwoThreeNode *present = *root, *parent = NULL;
-        while(present->type == INTERNAL) {
-            parent = present;
-            if(val <= parent->l) {
-                present = parent->children[0];
-            } else if(val <= parent->m || parent->numchild == 2) {
-                present = parent->children[1];
-            } else {
-                present = parent->children[2];
-            }
-        }
+        TwoThreeNode *parent = ttn_search_parent(*root, val);
 
         // Find the position of 'val' among the
         // children first.
@@ -225,6 +230,96 @@ void ttn_insert(TwoThreeNode **root, int val) {
         // does it's job correctly.
         ttn_insert_internal(root, parent, ttn_create_leaf(val), pos);
         // aaand hopefully we're done.
+    }
+}
+
+void ttn_delete_internal(TwoThreeNode **root, TwoThreeNode *parent, int pos) {
+    // First release the node
+    free(parent->children[pos]);
+    parent->children[pos] = NULL;
+    // shift all other children to the left
+    while(pos < 2) {
+        parent->children[pos] = parent->children[pos + 1];
+        parent->children[pos + 1] = NULL;
+        pos++;
+    }
+    parent->numchild--;
+    // Now check the number of children of parent
+    if(parent->numchild == 2) {
+        // if the parent has two children now,
+        // we're good. we just need to update L M
+        // values, and call it a day.
+        ttn_update_lm(parent);
+        return;
+    } else {
+        // the parent has 1 child now
+        if(*root == parent) {
+            // if the parent is the root itself,
+            // make the child new root, and release
+            // the parent.
+            *root = parent->children[0];
+            free(parent);
+            (*root)->parent = NULL;
+        } else {
+            // Otherwise, first find the position
+            // of 'parent' in its parent.
+            int pos = 0;
+            while(parent->parent->children[pos] != parent)
+                pos++;
+            // Backup the child
+            TwoThreeNode *leftover = parent->children[0];
+            // First, find the uncle of leftover
+            TwoThreeNode *uncle = NULL;
+            int toInsert = 0;
+            if(pos == parent->parent->numchild - 1) {
+                // we don't have any right uncle
+                // so, we choose the nearest left uncle
+                uncle = parent->parent->children[pos - 1];
+                // we will insert leftover as its left uncle's
+                // rightmost child
+                toInsert = uncle->numchild;
+                // if uncle has 3 children, it will automatically
+                // trigger a split
+            } else {
+                // we have a right uncle
+                uncle = parent->parent->children[parent->parent->numchild - 1];
+                // we will insert leftover to its left
+                toInsert = 0;
+            }
+            // Now, we first delete the 'parent'
+            ttn_delete_internal(root, parent->parent, pos);
+            // Then, we perform insertion on uncle
+            ttn_insert_internal(root, uncle, leftover, toInsert);
+        }
+    }
+
+}
+
+int ttn_delete(TwoThreeNode **root, int val) {
+    if((*root)->type == LEAF) {
+        if((*root)->val == val) {
+            free(*root);
+            *root = NULL;
+            return 1;
+        }
+        return 0;
+    } else {
+        TwoThreeNode *parent = ttn_search_parent(*root, val);
+        // check whether 'val' actually exists in a child of
+        // 'parent'
+        int pos = 0, found = 0;
+        while(pos < parent->numchild) {
+            if(parent->children[pos]->val == val) {
+                found = 1;
+                break;
+            }
+            pos++;
+        }
+        if(!found) {
+            return 0;
+        }
+        ttn_delete_internal(root, parent, pos);
+        return 1;
     }
 }
 
@@ -251,7 +346,8 @@ int ttn_print_dot_rec(TwoThreeNode *root, FILE *f, int *count) {
 void ttn_print_dot(TwoThreeNode* root, FILE *f, int graphno) {
     fprintf(f, "digraph twothreetree%d {\n", graphno);
     int childcount = 0;
-    ttn_print_dot_rec(root, f, &childcount);
+    if(root != NULL)
+        ttn_print_dot_rec(root, f, &childcount);
     fprintf(f, "}\n\n");
 }
 
@@ -264,14 +360,25 @@ void populate_arr_random(int *arr, int count, int limit) {
 
 int main () {
     TwoThreeNode *t = NULL;
-    int size = 100000;
-    int *values = (int*)malloc(sizeof(int)*size);
-    populate_arr_random(values, size, size*2);
+    int size = 10;
+    //int *values = (int*)malloc(sizeof(int)*size);
+    int values[] = {79, 16, 10, 67, 7, 90, 23, 11, 2, 45};
+    //populate_arr_random(values, size, size*2);
     int i = 0;
     for(i = 0;i < size;i++) {
         ttn_insert(&t, values[i]);
         //printf("// inserted %d\n", values[i]);
         //ttn_print_dot(t, stdout, i);
     }
-    //ttn_print_dot(t, stdout, 0);
+    ttn_delete(&t, 90);
+    ttn_delete(&t, 7);
+    ttn_delete(&t, 2);
+    ttn_delete(&t, 10);
+    ttn_delete(&t, 23);
+    ttn_delete(&t, 16);
+    ttn_delete(&t, 67);
+    ttn_delete(&t, 45);
+    ttn_delete(&t, 79);
+    ttn_delete(&t, 11);
+    ttn_print_dot(t, stdout, 0);
 }
