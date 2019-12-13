@@ -11,7 +11,6 @@ typedef enum NodeType {
 typedef struct TwoThreeNode{
     NodeType type;
     struct TwoThreeNode* parent;
-    int marker;
     // A node in a two three tree can
     // either be an internal node or
     // a leaf node. An internal node 
@@ -25,6 +24,7 @@ typedef struct TwoThreeNode{
     union {
         struct {
             int l, m, numchild;
+            int highestFromRight;
             struct TwoThreeNode *children[3];
         };
         struct {
@@ -39,7 +39,7 @@ TwoThreeNode* ttn_create_node(NodeType type) {
     ttn->parent = NULL;
     switch(type) {
         case INTERNAL:
-            ttn->l = ttn->m = ttn->numchild = 0;
+            ttn->l = ttn->m = ttn->numchild = ttn->highestFromRight = 0;
             ttn->children[0] = ttn->children[1] = ttn->children[2] = NULL;
             break;
         case LEAF:
@@ -61,24 +61,38 @@ TwoThreeNode* ttn_create_internal(int l, int m) {
     return node;
 }
 
-/*
-   void ttn_insert_into_parent(TwoThreeNode *parent, TwoThreeNode *val) {
+int ttn_get_highest_from_right(TwoThreeNode *node) {
+    switch(node->type) {
+        case INTERNAL:
+            return node->highestFromRight;
+        case LEAF:
+            return node->val;
+    }
+}
 
-   }
-   */
-
-int ttn_update_lm(TwoThreeNode *root) {
-    if(root->type == LEAF) {
-        return root->val;
-    } else {
-        int l = ttn_update_lm(root->children[0]);
-        int m = ttn_update_lm(root->children[1]);
-        root->l = l;
-        root->m = m;
-        if(root->numchild > 2) {
-            return ttn_update_lm(root->children[2]);
-        }
-        return m;
+// This method iteratively updates the L M values
+// of all nodes in the path of the root of the
+// tree to the argument node.
+// To facilitate the process, each internal node
+// stores a member named 'highestFromRight',
+// which stores the highest value present in
+// the rightmost subtree of the node.
+// For a node N,
+//      1. L value : highest value in the left subtree
+//      2. M value : highest value in the mid subtree
+//      3. highestFromRight : highest value present
+//          in its rightmost subtree.
+// This method iteratively adjusts the values up
+// until the root, which ensures updation of
+// the only nodes which were touched in the
+// insertion or deletion process.
+void ttn_update_lm(TwoThreeNode *node) {
+    while(node != NULL) {
+        TwoThreeNode *max = node->children[node->numchild - 1];
+        node->highestFromRight = ttn_get_highest_from_right(max);
+        node->l = ttn_get_highest_from_right(node->children[0]);
+        node->m = ttn_get_highest_from_right(node->children[1]);
+        node = node->parent;
     }
 }
 
@@ -97,6 +111,9 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode
         parent->children[pos] = value;
         value->parent = parent;
         parent->numchild = 3;
+
+        // update the L and M values of the parent
+        ttn_update_lm(parent);
         return;
     }
     // Otherwise, we need to split it.
@@ -138,6 +155,11 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode
     // Now, we clear out the extra child of 'parent'.
     parent->children[2] = NULL;
 
+    // update the L and M values of parent
+    // and tmp_internal
+    ttn_update_lm(parent);
+    ttn_update_lm(tmp_internal);
+
     // Now, we add the tmp_internal node to the tree
     if(parent->parent == NULL) {
         // we are at the top level of the tree,
@@ -147,6 +169,9 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode
         (*root)->children[1] = tmp_internal;
         parent->parent = tmp_internal->parent = *root;
         (*root)->numchild = 2;
+
+        // update the L and M values of the root
+        ttn_update_lm(*root);
         // we're done
     } else {
         // find position of 'parent' in its parent's
@@ -175,16 +200,17 @@ void ttn_insert(TwoThreeNode **root, int val) {
         (*root)->children[1] = middle;
         left->parent = middle->parent = *root;
         (*root)->numchild = 2;
+        (*root)->highestFromRight = middle->val;
     } else {
-        TwoThreeNode **present = root, *parent = NULL;
-        while((*present)->type == INTERNAL) {
-            parent = *present;
+        TwoThreeNode *present = *root, *parent = NULL;
+        while(present->type == INTERNAL) {
+            parent = present;
             if(val <= parent->l) {
-                present = &(parent->children[0]);
+                present = parent->children[0];
             } else if(val <= parent->m || parent->numchild == 2) {
-                present = &(parent->children[1]);
+                present = parent->children[1];
             } else {
-                present = &(parent->children[2]);
+                present = parent->children[2];
             }
         }
 
@@ -198,8 +224,6 @@ void ttn_insert(TwoThreeNode **root, int val) {
         // trembling hands and pray to God that it
         // does it's job correctly.
         ttn_insert_internal(root, parent, ttn_create_leaf(val), pos);
-        // finally, we update the L and M values
-        ttn_update_lm(*root);
         // aaand hopefully we're done.
     }
 }
@@ -241,7 +265,7 @@ void populate_arr_random(int *arr, int count, int limit) {
 int main () {
     TwoThreeNode *t = NULL;
     int size = 100000;
-    int values[size];
+    int *values = (int*)malloc(sizeof(int)*size);
     populate_arr_random(values, size, size*2);
     int i = 0;
     for(i = 0;i < size;i++) {
