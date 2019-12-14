@@ -3,40 +3,57 @@
 #include <string.h>
 #include <time.h>
 
+// The type which distinguishes
+// between two different kind of
+// two three nodes sharing the
+// same structure : internal nodes
+// and the leaves.
 typedef enum NodeType {
     INTERNAL,
     LEAF
 } NodeType;
 
+// The core two three node structure
 typedef struct TwoThreeNode{
-    NodeType type;
-    struct TwoThreeNode* parent;
+    NodeType type; // the type of this node
+    struct TwoThreeNode* parent; // pointer to its parent
     // A node in a two three tree can
     // either be an internal node or
     // a leaf node. An internal node 
     // again can have either another
     // internal node or a leaf as its
-    // children. To simply all that, 
+    // children. To simplify all that, 
     // we merge the two different kind
     // of nodes here using the union, 
     // and separate them by the NodeType
     // declared above.
     union {
+        // Structure of an internal node
         struct {
-            int l, m, numchild;
-            int highestFromRight;
-            struct TwoThreeNode *children[3];
+            int l; // L value
+            int m; // M value
+            int numchild; // Number of children of the node
+            int highestFromRight; // Highest value present in
+                                // the rightmost subtree of the
+                                // node
+            struct TwoThreeNode *children[3]; // Children of the node
         };
+        // Structure of a leaf
         struct {
-            int val;
+            int val; // Value stored in the leaf
         };
     };
 } TwoThreeNode;
 
+// This method allocates memory for a TwoThreeNode
+// with a given 'type', and resets all its members
+// before returning it back.
 TwoThreeNode* ttn_create_node(NodeType type) {
+    // Allocate memory
     TwoThreeNode* ttn = (TwoThreeNode*)malloc(sizeof(TwoThreeNode));
     ttn->type = type;
     ttn->parent = NULL;
+    // Reset the members
     switch(type) {
         case INTERNAL:
             ttn->l = ttn->m = ttn->numchild = ttn->highestFromRight = 0;
@@ -49,18 +66,30 @@ TwoThreeNode* ttn_create_node(NodeType type) {
     return ttn;
 }
 
+// This method creates a TwoThreeNode with 'type'
+// set to LEAF, and given value.
 TwoThreeNode* ttn_create_leaf(int val) {
     TwoThreeNode* node = ttn_create_node(LEAF);
     node->val = val;
     return node;
 }
 
+// This method creates a TwoThreeNode with 'type'
+// set to INTERNAL, and given L and M values.
 TwoThreeNode* ttn_create_internal(int l, int m) {
     TwoThreeNode* node = ttn_create_node(INTERNAL);
     node->l = l; node->m = m;
     return node;
 }
 
+// Depending on the type of the node
+// highest value from the right subtree
+// can be slightly differnt.
+// For a leaf node, it is the value of
+// its own. For an internal node, it is
+// stored in the member.
+// This method performs the check and
+// returns the value.
 int ttn_get_highest_from_right(TwoThreeNode *node) {
     switch(node->type) {
         case INTERNAL:
@@ -88,35 +117,58 @@ int ttn_get_highest_from_right(TwoThreeNode *node) {
 // insertion or deletion process.
 void ttn_update_lm(TwoThreeNode *node) {
     while(node != NULL) {
+        // Get the rightmost child
         TwoThreeNode *max = node->children[node->numchild - 1];
+        // Get the highest value of that subtree
         node->highestFromRight = ttn_get_highest_from_right(max);
+        // Get the highest value of the left subtree
         node->l = ttn_get_highest_from_right(node->children[0]);
+        // Get the highest value of the mid subtree
         node->m = ttn_get_highest_from_right(node->children[1]);
+        // Go for the parent
         node = node->parent;
     }
 }
 
 // Given a 'parent', and a 'pos' to insert 'value' in
-// its children, this method performs the split, and
-// adjusts the whole tree recursively.
+// its children, this method does the actual insertion.
+// This is different from 'ttn_insert' in so that
+// all it bothers with is inserting 'value' at index
+// 'pos' of 'parent'.
+//
+// This is required because in case of a split,
+// all we need to do is that add a new child
+// to the parent at an index one right to the
+// present node.
 void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode *value, int pos) {
+    // First, we check the number of children
+    // of parent
     if(parent->numchild == 2) {
         // we still have space for one child.
-        // problem = solved.
+        // problem = solved
+        // We shift children from 0 to pos to
+        // the right
         int i = 1;
         while(i >= pos) {
             parent->children[i + 1] = parent->children[i];
             i--;
         }
+        // And insert 'value' at pos
         parent->children[pos] = value;
         value->parent = parent;
+
+        // We update the number of children of
+        // parent
         parent->numchild = 3;
 
-        // update the L and M values of the parent
+        // And finally, we update the L and M
+        // values of the parent
         ttn_update_lm(parent);
+        // aand we're done
         return;
     }
-    // Otherwise, we need to split it.
+    // Otherwise, parent contains 3 childern
+    // already, so we need to split it.
 
     // Create the split node first. The split node
     // is going to be the next right child of the 
@@ -130,8 +182,8 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode
     // For that, we first create an array of size 4,
     // which contains all three children of 'parent'.
     TwoThreeNode *arr[4] = {parent->children[0], parent->children[1], parent->children[2], NULL};
-    // Now we insert 'value' at pos, shifting all 
-    // other elements to the right.
+    // We first shift elements from 0 to pos to the 
+    // right
     int bak = 3;
     while(bak > pos) {
         arr[bak] = arr[bak - 1];
@@ -152,36 +204,50 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode
 
     // Now we set numchild of both of them to 2
     parent->numchild = tmp_internal->numchild = 2;
-    // Now, we clear out the extra child of 'parent'.
+    // Now, we clear out the extra child of 'parent',
+    // which contained three children before
     parent->children[2] = NULL;
 
-    // update the L and M values of parent
+    // Then, we update the L and M values of parent
     // and tmp_internal
     ttn_update_lm(parent);
     ttn_update_lm(tmp_internal);
 
-    // Now, we add the tmp_internal node to the tree
+    // Now, we need add the tmp_internal node to the tree
     if(parent->parent == NULL) {
-        // we are at the top level of the tree,
+        // We are at the top level of the tree,
         // and hence, need to modify the root.
+
+        // We first create an internal node
         *root = ttn_create_internal(0, 0);
+        // The we assign 'parent' and
+        // 'tmp_internal' as its children,
+        // and update their parent.
         (*root)->children[0] = parent;
         (*root)->children[1] = tmp_internal;
         parent->parent = tmp_internal->parent = *root;
+        // Next, we update the number
+        // of children of root.
         (*root)->numchild = 2;
 
-        // update the L and M values of the root
+        // Finally, update the L and M values of the root
         ttn_update_lm(*root);
-        // we're done
+        // aand we're done.
     } else {
-        // find position of 'parent' in its parent's
-        // children array, and insert it one right
+        // 'parent' has a parent of its own.
+        // So we first find position of 'parent'
+        // in its parent's children array
         int i = 0;
         while(parent->parent->children[i] != parent) i++;
+        // and insert 'tmp_internal' one right to it
         ttn_insert_internal(root, parent->parent, tmp_internal, i + 1);
+        // and we're done.
     }
 }
 
+// This function searches for the parent node
+// whose children should contain a leaf node
+// containing 'val'
 TwoThreeNode* ttn_search_parent(TwoThreeNode *root, int val) {
     TwoThreeNode *present = root, *parent = NULL;
     while(present->type == INTERNAL) {
@@ -197,30 +263,52 @@ TwoThreeNode* ttn_search_parent(TwoThreeNode *root, int val) {
     return parent;
 }
 
+// Given a two three tree with root pointed
+// by 'root', this method inserts 'val' in
+// the tree
 void ttn_insert(TwoThreeNode **root, int val) {
-    if(*root == NULL) { // tree contains no children
+    if(*root == NULL) {
+        // tree contains no children
+        // node containing the 'val'
+        // will be the new leaf
         *root = ttn_create_leaf(val);
     }
     else if((*root)->type != INTERNAL) {
         // tree contains one child
         TwoThreeNode *tmp1 = *root, *tmp2 = ttn_create_leaf(val);
+        // we need to determine which one
+        // of them is gonna go on the left
+        // and which one should go in
+        // the middle
         TwoThreeNode *left = tmp1, *middle = tmp1;
         if(tmp1->val < val) {
             middle = tmp2;
         } else {
             left = tmp2;
         }
+        // Now, we create an internal node,
+        // the first one for this tree,
+        // and make it the root. Since
+        // it only contains two children, we
+        // also know the L and M values
+        // instantly.
         *root = ttn_create_internal(left->val, middle->val);
+        // Now, we adjust the pointers
         (*root)->children[0] = left;
         (*root)->children[1] = middle;
         left->parent = middle->parent = *root;
         (*root)->numchild = 2;
+        // Finally, we mark the value of
+        // the middle node as the highest value
+        // of the rightmost subtree of root.
         (*root)->highestFromRight = middle->val;
     } else {
+        // First, we search the parent where 'val'
+        // can be inserted
         TwoThreeNode *parent = ttn_search_parent(*root, val);
 
-        // Find the position of 'val' among the
-        // children first.
+        // Next, we determine the position of 'val' 
+        // among the children of 'parent'
         int pos = 0;
         while(pos < 3 && parent->children[pos] != NULL && parent->children[pos]->val < val) {
             pos++;
@@ -233,8 +321,23 @@ void ttn_insert(TwoThreeNode **root, int val) {
     }
 }
 
+// This method deletes the children at index
+// 'pos' of the 'parent' in the two three
+// tree pointed by 'root'.
+// This method is different from 'ttn_delete'
+// in so that it does not bother retrieving
+// the position of a given value in the tree.
+// It needs to have the location specified,
+// using which it just performs the deletion.
+//
+// This is required for the fact that deletion
+// might be needed to propagate from a leaf
+// to the root, and in those cases we are just
+// bothered with deletion of a child in a
+// specific index of a parent, and its
+// consequences.
 void ttn_delete_internal(TwoThreeNode **root, TwoThreeNode *parent, int pos) {
-    // First release the node
+    // First release the child
     free(parent->children[pos]);
     parent->children[pos] = NULL;
     // shift all other children to the left
@@ -243,6 +346,7 @@ void ttn_delete_internal(TwoThreeNode **root, TwoThreeNode *parent, int pos) {
         parent->children[pos + 1] = NULL;
         pos++;
     }
+    // Decrease the number of children of the parent
     parent->numchild--;
     // Now check the number of children of parent
     if(parent->numchild == 2) {
@@ -268,11 +372,12 @@ void ttn_delete_internal(TwoThreeNode **root, TwoThreeNode *parent, int pos) {
                 pos++;
             // Backup the child
             TwoThreeNode *leftover = parent->children[0];
-            // First, find the uncle of leftover
+            // First, find the uncle of leftover, and
+            // the subsequent insertion position
             TwoThreeNode *uncle = NULL;
             int toInsert = 0;
             if(pos == parent->parent->numchild - 1) {
-                // we don't have any right uncle
+                // we don't have any right uncle of leftover
                 // so, we choose the nearest left uncle
                 uncle = parent->parent->children[pos - 1];
                 // we will insert leftover as its left uncle's
@@ -281,22 +386,30 @@ void ttn_delete_internal(TwoThreeNode **root, TwoThreeNode *parent, int pos) {
                 // if uncle has 3 children, it will automatically
                 // trigger a split
             } else {
-                // we have a right uncle
+                // we have a right uncle of leftover
                 uncle = parent->parent->children[parent->parent->numchild - 1];
                 // we will insert leftover to its left
                 toInsert = 0;
             }
-            // Now, we first delete the 'parent'
+            // Now, we first delete the 'parent' from
+            // its parent, which is located at index 'pos'
             ttn_delete_internal(root, parent->parent, pos);
             // Then, we perform insertion on uncle
             ttn_insert_internal(root, uncle, leftover, toInsert);
+            // and we're done.
         }
     }
 
 }
 
+// Deletes a node with value 'val' from
+// the two three tree with root pointed
+// by 'root'. If the node is found in
+// the tree, it returns 1, otherwise it
+// returns 0.
 int ttn_delete(TwoThreeNode **root, int val) {
     if((*root)->type == LEAF) {
+        // If there is only one node in the tree
         if((*root)->val == val) {
             free(*root);
             *root = NULL;
@@ -304,6 +417,8 @@ int ttn_delete(TwoThreeNode **root, int val) {
         }
         return 0;
     } else {
+        // Search for the parent whose children
+        // should contain val
         TwoThreeNode *parent = ttn_search_parent(*root, val);
         // check whether 'val' actually exists in a child of
         // 'parent'
@@ -315,14 +430,20 @@ int ttn_delete(TwoThreeNode **root, int val) {
             }
             pos++;
         }
+        // 'val' not found in any children of parent
         if(!found) {
             return 0;
         }
+        // 'val' found in children at 'pos' of
+        // 'parent'. Perform the deletion.
         ttn_delete_internal(root, parent, pos);
         return 1;
     }
 }
 
+// This method recursively prints all the children of
+// a two three tree pointed by the given root in
+// dot language.
 int ttn_print_dot_rec(TwoThreeNode *root, FILE *f, int *count) {
     if(root->type == LEAF) {
         fprintf(f, "\tchild%d[shape=circle,label=\"%d\"];\n", *count, root->val);
@@ -343,11 +464,20 @@ int ttn_print_dot_rec(TwoThreeNode *root, FILE *f, int *count) {
     return (*count)++;
 }
 
-void ttn_print_dot(TwoThreeNode* root, FILE *f, int graphno) {
-    fprintf(f, "digraph twothreetree%d {\n", graphno);
-    int childcount = 0;
+// Prints a given two three tree in 'dot' format.
+// Since, it may be called to draw more than one
+// graphs on the same tree, it needs a predefined
+// 'childcount' which the recursive method
+// 'ttn_print_dot_rec' increments to uniquely mark
+// each node in the tree.
+void ttn_print_dot(TwoThreeNode* root, FILE *f, int *childcount) {
+    if(*childcount == 0) {
+        fprintf(f, "digraph twothreetree {\n");
+    }
+    fprintf(f, "subgraph cluster_%d {\n", *childcount);
+    fprintf(f, "\tlabel = \"graph%d\";\n", *childcount);
     if(root != NULL)
-        ttn_print_dot_rec(root, f, &childcount);
+        ttn_print_dot_rec(root, f, childcount);
     fprintf(f, "}\n\n");
 }
 
@@ -365,11 +495,13 @@ int main () {
     int values[] = {79, 16, 10, 67, 7, 90, 23, 11, 2, 45};
     //populate_arr_random(values, size, size*2);
     int i = 0;
+    int childcount = 0;
     for(i = 0;i < size;i++) {
         ttn_insert(&t, values[i]);
         //printf("// inserted %d\n", values[i]);
-        //ttn_print_dot(t, stdout, i);
+        //ttn_print_dot(t, stdout, &childcount);
     }
+    ttn_print_dot(t, stdout, &childcount);
     ttn_delete(&t, 90);
     ttn_delete(&t, 7);
     ttn_delete(&t, 2);
@@ -380,5 +512,6 @@ int main () {
     ttn_delete(&t, 45);
     ttn_delete(&t, 79);
     ttn_delete(&t, 11);
-    ttn_print_dot(t, stdout, 0);
+    //ttn_print_dot(t, stdout, &childcount);
+    printf("}\n");
 }
