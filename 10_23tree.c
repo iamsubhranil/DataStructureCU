@@ -408,6 +408,8 @@ void ttn_delete_internal(TwoThreeNode **root, TwoThreeNode *parent, int pos) {
 // the tree, it returns 1, otherwise it
 // returns 0.
 int ttn_delete(TwoThreeNode **root, int val) {
+    if(*root == NULL)
+        return 2;
     if((*root)->type == LEAF) {
         // If there is only one node in the tree
         if((*root)->val == val) {
@@ -439,6 +441,47 @@ int ttn_delete(TwoThreeNode **root, int val) {
         ttn_delete_internal(root, parent, pos);
         return 1;
     }
+}
+
+// This function recursively prints the subtree
+// in the given 'level' using inorder traversal
+void ttn_print_rec(TwoThreeNode *node, int level) {
+    int bak = level;
+    if(node->type == INTERNAL) {
+        ttn_print_rec(node->children[0], level + 1);
+    }
+
+    bak = level;
+    while(bak--) {
+        printf("\t|");
+    }
+
+    printf("-- ");
+    if(node->type == LEAF) {
+        printf("%d\n", node->val);
+    } else {
+        printf("%d : %d\n", node->l, node->m);
+        ttn_print_rec(node->children[1], level + 1);
+        if(node->numchild == 3) {
+            if(node->children[2]->type != LEAF) {
+                bak = level + 1;
+                while(bak--) {
+                    printf("\t|");
+                }
+                printf("\n");
+            }
+            ttn_print_rec(node->children[2], level + 1);
+        }
+    }
+}
+
+// This method prints the whole tree
+// pointed by 'root' into stdout
+void ttn_print(TwoThreeNode *root) {
+    if(root == NULL) {
+        printf("<empty>\n");
+    } else
+        ttn_print_rec(root, 0);
 }
 
 // This method recursively prints all the children of
@@ -481,37 +524,78 @@ void ttn_print_dot(TwoThreeNode* root, FILE *f, int *childcount) {
     fprintf(f, "}\n\n");
 }
 
-void populate_arr_random(int *arr, int count, int limit) {
-    srand(time(NULL));
-    while(count--) {
-        arr[count] = (rand() % limit) + 1;
-    }
-}
-
 int main () {
     TwoThreeNode *t = NULL;
-    int size = 10;
-    //int *values = (int*)malloc(sizeof(int)*size);
-    int values[] = {79, 16, 10, 67, 7, 90, 23, 11, 2, 45};
-    //populate_arr_random(values, size, size*2);
-    int i = 0;
-    int childcount = 0;
-    for(i = 0;i < size;i++) {
-        ttn_insert(&t, values[i]);
-        //printf("// inserted %d\n", values[i]);
-        //ttn_print_dot(t, stdout, &childcount);
+    char c;
+    int val, num, inserted = 0, bak;
+    printf("Two three tree\n");
+    printf("==============");
+    while(1) {
+        printf("\n\n1. Insert\n");
+        printf("2. Delete\n");
+        printf("3. Print : ");
+        scanf(" %c", &c);
+        printf("\n");
+        switch(c) {
+            case '1':
+                printf("Enter number of values to insert : ");
+                scanf("%d", &num);
+                inserted = 0;
+                if(num > 10) {
+                    printf("1. Use random values\n");
+                    printf("2. Enter manually : ");
+                    scanf(" %c", &c);
+                    switch(c) {
+                        case '2':
+                            break;
+                        default:
+                            inserted = 1;
+                            bak = num;
+                            while(bak--) {
+                                val = (rand() % (num * 2)) + 1;
+                                ttn_insert(&t, val);
+                                printf("Insertion successful: %d!\n", val);
+                            }
+                            break;
+                    }
+                }
+                if(!inserted) {
+                    while(num--) {
+                        printf("\nEnter value : ");
+                        scanf("%d", &val);
+                        ttn_insert(&t, val);
+                        printf("Insertion successful: %d!", val);
+                    }
+                }
+                break;
+            case '2':
+                printf("Enter the value to delete : ");
+                scanf("%d", &val);
+                val = ttn_delete(&t, val);
+                switch(val) {
+                    case 0:
+                        printf("Deletion failed: Value not found in the tree!");
+                        break;
+                    case 1:
+                        printf("Deletion successful!");
+                        break;
+                    case 2:
+                        printf("Deletion failed: Tree is empty!");
+                        break;
+                }
+                break;
+            case '3':
+                ttn_print(t);
+                break;
+            default:
+                printf("Are you sure want to exit (y/n) ? ");
+                scanf(" %c", &c);
+                switch(c) {
+                    case 'y':
+                    case 'Y':
+                        return 0;
+                }
+                break;
+        }
     }
-    ttn_print_dot(t, stdout, &childcount);
-    ttn_delete(&t, 90);
-    ttn_delete(&t, 7);
-    ttn_delete(&t, 2);
-    ttn_delete(&t, 10);
-    ttn_delete(&t, 23);
-    ttn_delete(&t, 16);
-    ttn_delete(&t, 67);
-    ttn_delete(&t, 45);
-    ttn_delete(&t, 79);
-    ttn_delete(&t, 11);
-    //ttn_print_dot(t, stdout, &childcount);
-    printf("}\n");
 }
