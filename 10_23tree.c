@@ -445,15 +445,35 @@ int ttn_delete(TwoThreeNode **root, int val) {
 
 // This function recursively prints the subtree
 // in the given 'level' using inorder traversal
-void ttn_print_rec(TwoThreeNode *node, int level) {
-    int bak = level;
+//
+// 'print_level' stores the information on
+// whether or not to print | to denote a parent
+// level.
+void ttn_print_rec(TwoThreeNode *node, int level, int **print_level, int *print_level_size) {
+    // Extend the array for this level if required
+    if(*print_level_size == level) {
+        int bak = *print_level_size;
+        (*print_level_size) = level + 1;
+        *print_level = (int*)realloc(*print_level, sizeof(int)*(*print_level_size));
+        while(bak < *print_level_size) {
+            print_level[0][bak] = 0;
+            bak++;
+        }
+    }
     if(node->type == INTERNAL) {
-        ttn_print_rec(node->children[0], level + 1);
+        ttn_print_rec(node->children[0], level + 1, print_level, print_level_size);
     }
 
-    bak = level;
-    while(bak--) {
-        printf("\t|");
+    // Initially, we'll print this level
+    print_level[0][level] = 1;
+    int bak = 1;
+    while(bak <= level) {
+        printf("\t");
+        if(print_level[0][bak])
+            printf("|");
+        else
+            printf(" ");
+        bak++;
     }
 
     printf("-- ");
@@ -461,18 +481,50 @@ void ttn_print_rec(TwoThreeNode *node, int level) {
         printf("%d\n", node->val);
     } else {
         printf("%d : %d\n", node->l, node->m);
-        ttn_print_rec(node->children[1], level + 1);
+        // Now we need to decide whether to print
+        // the | to denote this level while
+        // printing subsequent children
+        if(node->parent == NULL) {
+            // no parent, so we won't print
+            print_level[0][level] = 0;
+        } else {
+            // if this is the left child, we'll print |
+            if(node->parent->children[0] == node)
+                print_level[0][level] = 1;
+            // else if this is not the ultimate
+            // child, we'll print |
+            else if(node->parent->children[node->parent->numchild - 1] != node)
+                print_level[0][level] = 1;
+            // otherwise, we won't
+            else
+                print_level[0][level] = 0;
+        }
+        // Since there is more children, we'll
+        // print the child's level regardless
+        print_level[0][level + 1] = 1;
+        ttn_print_rec(node->children[1], level + 1, print_level, print_level_size);
+
         if(node->numchild == 3) {
+            print_level[0][level + 1] = 1;
             if(node->children[2]->type != LEAF) {
-                bak = level + 1;
-                while(bak--) {
-                    printf("\t|");
+                bak = 1;
+                while(bak <= level + 1) {
+                    printf("\t");
+                    if(print_level[0][bak])
+                        printf("|");
+                    else
+                        printf(" ");
+                    bak++;
                 }
                 printf("\n");
             }
-            ttn_print_rec(node->children[2], level + 1);
+            ttn_print_rec(node->children[2], level + 1, print_level, print_level_size);
         }
     }
+    // finally, we reset this level's
+    // separator which won't be turned on
+    // until the parent explicitly does so.
+    print_level[0][level] = 0;
 }
 
 // This method prints the whole tree
@@ -480,8 +532,11 @@ void ttn_print_rec(TwoThreeNode *node, int level) {
 void ttn_print(TwoThreeNode *root) {
     if(root == NULL) {
         printf("<empty>\n");
-    } else
-        ttn_print_rec(root, 0);
+    } else {
+        int *print_level = NULL, level_size = 0;
+        ttn_print_rec(root, 0, &print_level, &level_size);
+        free(print_level);
+    }
 }
 
 // This method recursively prints all the children of
