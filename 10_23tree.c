@@ -443,6 +443,20 @@ int ttn_delete(TwoThreeNode **root, int val) {
     }
 }
 
+// Release the memory occupied by a 23tree
+void ttn_free(TwoThreeNode **root) {
+    if(*root == NULL)
+        return;
+    if((*root)->type == INTERNAL) {
+        ttn_free(&(*root)->children[0]);
+        ttn_free(&(*root)->children[1]);
+        if((*root)->numchild == 3)
+            ttn_free(&(*root)->children[2]);
+    }
+    free(*root);
+    *root = NULL;
+}
+
 // This function recursively prints the subtree
 // in the given 'level' using inorder traversal
 //
@@ -648,6 +662,7 @@ int main () {
                 switch(c) {
                     case 'y':
                     case 'Y':
+                        ttn_free(&t);
                         return 0;
                 }
                 break;
