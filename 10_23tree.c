@@ -82,23 +82,6 @@ TwoThreeNode* ttn_create_internal(int l, int m) {
     return node;
 }
 
-// Depending on the type of the node
-// highest value from the right subtree
-// can be slightly differnt.
-// For a leaf node, it is the value of
-// its own. For an internal node, it is
-// stored in the member.
-// This method performs the check and
-// returns the value.
-int ttn_get_highest_from_right(TwoThreeNode *node) {
-    switch(node->type) {
-        case INTERNAL:
-            return node->highestFromRight;
-        case LEAF:
-            return node->val;
-    }
-}
-
 // This method iteratively updates the L M values
 // of all nodes in the path of the root of the
 // tree to the argument node.
@@ -119,12 +102,26 @@ void ttn_update_lm(TwoThreeNode *node) {
     while(node != NULL) {
         // Get the rightmost child
         TwoThreeNode *max = node->children[node->numchild - 1];
-        // Get the highest value of that subtree
-        node->highestFromRight = ttn_get_highest_from_right(max);
-        // Get the highest value of the left subtree
-        node->l = ttn_get_highest_from_right(node->children[0]);
-        // Get the highest value of the mid subtree
-        node->m = ttn_get_highest_from_right(node->children[1]);
+        // Since all leaves of a two three tree reside
+        // in the same level, if max is leaf, then all
+        // children of 'node' are leaves.
+        // Similary if max is an internal, all children
+        // of 'node' are internals
+        switch(max->type) {
+            case LEAF:
+                // Highest value of rightmost subtree
+                node->highestFromRight = max->val;
+                // Highest value of the left subtree
+                node->l = node->children[0]->val;
+                // Highest value of the mid subtree
+                node->m = node->children[1]->val;
+                break;
+            case INTERNAL:
+                node->highestFromRight = max->highestFromRight;
+                node->l = node->children[0]->highestFromRight;
+                node->m = node->children[1]->highestFromRight;
+                break;
+        }
         // Go for the parent
         node = node->parent;
     }
