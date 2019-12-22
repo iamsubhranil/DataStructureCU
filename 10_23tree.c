@@ -249,12 +249,11 @@ TwoThreeNode* ttn_search_parent(TwoThreeNode *root, int val) {
     TwoThreeNode *present = root, *parent = NULL;
     while(present->type == INTERNAL) {
         parent = present;
-        if(val <= parent->l) {
-            present = parent->children[0];
-        } else if(val <= parent->m || parent->numchild == 2) {
+        present = parent->children[parent->numchild - 1];
+        if(val <= parent->m) {
             present = parent->children[1];
-        } else {
-            present = parent->children[2];
+            if(val <= parent->l)
+                present = parent->children[0];
         }
     }
     return parent;
