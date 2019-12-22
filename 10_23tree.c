@@ -82,9 +82,7 @@ TwoThreeNode* ttn_create_internal(int l, int m) {
     return node;
 }
 
-// This method iteratively updates the L M values
-// of all nodes in the path of the root of the
-// tree to the argument node.
+// Updates L and M values only for the given node.
 // To facilitate the process, each internal node
 // stores a member named 'highestFromRight',
 // which stores the highest value present in
@@ -94,35 +92,42 @@ TwoThreeNode* ttn_create_internal(int l, int m) {
 //      2. M value : highest value in the mid subtree
 //      3. highestFromRight : highest value present
 //          in its rightmost subtree.
+void ttn_update_lm_only(TwoThreeNode *node) {
+    // Get the rightmost child
+    TwoThreeNode **children = node->children;
+    TwoThreeNode *max = children[node->numchild - 1];
+    // Since all leaves of a two three tree reside
+    // in the same level, if max is leaf, then all
+    // children of 'node' are leaves.
+    // Similary if max is an internal, all children
+    // of 'node' are internals
+    switch(max->type) {
+        case LEAF:
+            // Highest value of rightmost subtree
+            node->highestFromRight = max->val;
+            // Highest value of the left subtree
+            node->l = children[0]->val;
+            // Highest value of the mid subtree
+            node->m = children[1]->val;
+            break;
+        case INTERNAL:
+            node->highestFromRight = max->highestFromRight;
+            node->l = children[0]->highestFromRight;
+            node->m = children[1]->highestFromRight;
+            break;
+    }
+}
+
+// This method iteratively updates the L M values
+// of all nodes in the path of the root of the
+// tree to the argument node.
 // This method iteratively adjusts the values up
 // until the root, which ensures updation of
 // the only nodes which were touched in the
 // insertion or deletion process.
 void ttn_update_lm(TwoThreeNode *node) {
     while(node != NULL) {
-        // Get the rightmost child
-        TwoThreeNode **children = node->children;
-        TwoThreeNode *max = children[node->numchild - 1];
-        // Since all leaves of a two three tree reside
-        // in the same level, if max is leaf, then all
-        // children of 'node' are leaves.
-        // Similary if max is an internal, all children
-        // of 'node' are internals
-        switch(max->type) {
-            case LEAF:
-                // Highest value of rightmost subtree
-                node->highestFromRight = max->val;
-                // Highest value of the left subtree
-                node->l = children[0]->val;
-                // Highest value of the mid subtree
-                node->m = children[1]->val;
-                break;
-            case INTERNAL:
-                node->highestFromRight = max->highestFromRight;
-                node->l = children[0]->highestFromRight;
-                node->m = children[1]->highestFromRight;
-                break;
-        }
+        ttn_update_lm_only(node);
         // Go for the parent
         node = node->parent;
     }
@@ -208,8 +213,8 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode
 
     // Then, we update the L and M values of parent
     // and tmp_internal
-    ttn_update_lm(parent);
-    ttn_update_lm(tmp_internal);
+    ttn_update_lm_only(parent);
+    ttn_update_lm_only(tmp_internal);
 
     // Now, we need add the tmp_internal node to the tree
     if(parent->parent == NULL) {
@@ -229,7 +234,7 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode
         (*root)->numchild = 2;
 
         // Finally, update the L and M values of the root
-        ttn_update_lm(*root);
+        ttn_update_lm_only(*root);
         // aand we're done.
     } else {
         // 'parent' has a parent of its own.
