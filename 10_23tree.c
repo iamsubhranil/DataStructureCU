@@ -593,10 +593,42 @@ void ttn_print_dot(TwoThreeNode* root, FILE *f, int *childcount) {
     fprintf(f, "}\n\n");
 }
 
-int main () {
+// Benchmarks insertion and deletion methods
+void bench(char **argv) {
+    TwoThreeNode *t = NULL;
+    long inserted = 0;
+    char *end = NULL;
+    long items = strtol(argv[1], &end, 10);
+    if(end[0] != 0 || items < 1) {
+        printf("Invalid number of items : '%s'\n", argv[1]);
+    } else {
+        int *arr = (int*)malloc(sizeof(int)*items);
+        while(inserted < items) {
+            arr[inserted++] = rand();
+        }
+        clock_t begin = clock();
+        inserted = 0;
+        while(inserted < items) {
+            ttn_insert(&t, arr[inserted++]);
+        }
+        double insertion = (double)(clock() - begin) / CLOCKS_PER_SEC;
+        inserted = 0;
+        while(inserted < items) {
+            ttn_delete(&t, arr[inserted++]);
+        }
+        double deletion = (double)(clock() - begin) / CLOCKS_PER_SEC;
+        printf("\nInsertion took: %0.5fs\nDeletion took: %0.5fs\n", insertion, deletion);
+    }
+}
+
+int main (int argc, char *argv[]) {
     TwoThreeNode *t = NULL;
     char c;
     int val, num, inserted = 0, bak;
+    if(argc == 2) {
+        bench(argv);
+        return 0;
+    }
     printf("Two three tree\n");
     printf("==============");
     while(1) {
