@@ -101,7 +101,8 @@ TwoThreeNode* ttn_create_internal(int l, int m) {
 void ttn_update_lm(TwoThreeNode *node) {
     while(node != NULL) {
         // Get the rightmost child
-        TwoThreeNode *max = node->children[node->numchild - 1];
+        TwoThreeNode **children = node->children;
+        TwoThreeNode *max = children[node->numchild - 1];
         // Since all leaves of a two three tree reside
         // in the same level, if max is leaf, then all
         // children of 'node' are leaves.
@@ -112,14 +113,14 @@ void ttn_update_lm(TwoThreeNode *node) {
                 // Highest value of rightmost subtree
                 node->highestFromRight = max->val;
                 // Highest value of the left subtree
-                node->l = node->children[0]->val;
+                node->l = children[0]->val;
                 // Highest value of the mid subtree
-                node->m = node->children[1]->val;
+                node->m = children[1]->val;
                 break;
             case INTERNAL:
                 node->highestFromRight = max->highestFromRight;
-                node->l = node->children[0]->highestFromRight;
-                node->m = node->children[1]->highestFromRight;
+                node->l = children[0]->highestFromRight;
+                node->m = children[1]->highestFromRight;
                 break;
         }
         // Go for the parent
@@ -246,14 +247,15 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent, TwoThreeNode
 // whose children should contain a leaf node
 // containing 'val'
 TwoThreeNode* ttn_search_parent(TwoThreeNode *root, int val) {
-    TwoThreeNode *present = root, *parent = NULL;
+    TwoThreeNode *present = root, *parent = NULL, **children = NULL;
     while(present->type == INTERNAL) {
         parent = present;
-        present = parent->children[parent->numchild - 1];
+        children = parent->children;
+        present = children[parent->numchild - 1];
         if(val <= parent->m) {
-            present = parent->children[1];
+            present = children[1];
             if(val <= parent->l)
-                present = parent->children[0];
+                present = children[0];
         }
     }
     return parent;
