@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-typedef struct Array{
+typedef struct Array {
 	int *array;
-	int count;
+	int  count;
 } Array;
-
 
 Array array_malloc(int c) {
 	Array a;
@@ -17,14 +16,12 @@ Array array_malloc(int c) {
 
 void array_populate(Array a, const char *el) {
 	printf("\nEnter %d %s : ", a.count, el);
-	for(int i = 0; i < a.count;i++)
-		scanf("%d", &a.array[i]);
+	for(int i = 0; i < a.count; i++) scanf("%d", &a.array[i]);
 }
 
 void array_print(Array a) {
 	printf("{ ");
-	for(int i = 0;i < a.count;i++)
-		printf("%d, ", a.array[i]);
+	for(int i = 0; i < a.count; i++) printf("%d, ", a.array[i]);
 	printf("}");
 }
 
@@ -36,16 +33,15 @@ void array_populate_random(Array a) {
 }
 
 int int_compare(const void *a, const void *b) {
-	return (*(int*)a - *(int*)b);
+	return (*(int *)a - *(int *)b);
 }
 
 int quick_sort_partition(int *arr, int left, int right) {
 	int pivot = left;
 	while(left < right) {
-		while(arr[pivot] <= arr[right] && pivot < right)
-			right--;
-		if(arr[pivot] > arr[right]){
-			int temp = arr[pivot];
+		while(arr[pivot] <= arr[right] && pivot < right) right--;
+		if(arr[pivot] > arr[right]) {
+			int temp   = arr[pivot];
 			arr[pivot] = arr[right];
 			arr[right] = temp;
 			left++;
@@ -55,10 +51,10 @@ int quick_sort_partition(int *arr, int left, int right) {
 			left++;
 		}
 		if(arr[pivot] < arr[left]) {
-			int temp = arr[pivot];
+			int temp   = arr[pivot];
 			arr[pivot] = arr[left];
-			arr[left] = temp;
-			pivot = left;
+			arr[left]  = temp;
+			pivot      = left;
 			right--;
 		}
 	}
@@ -84,7 +80,7 @@ int main() {
 	scanf("%d", &count);
 	Array a = array_malloc(count);
 	array_populate(a, "elements");
-	//array_populate_random(a);
+	// array_populate_random(a);
 	printf("\nArray : ");
 	array_print(a);
 	printf("\nEnter number of passes : ");
@@ -93,10 +89,10 @@ int main() {
 	array_populate(increments, "increments");
 	int total = a.count;
 	for(int i = 0; i < count; i++) {
-		int numLists = increments.array[i];
-		int increment = increments.array[i];
+		int   numLists  = increments.array[i];
+		int   increment = increments.array[i];
 		Array lists[increment];
-		int el = (total / increment) + ((total % increment) > 0);
+		int   el = (total / increment) + ((total % increment) > 0);
 		printf("\nIncrement %d : ", increment);
 		for(int j = 0; j < increment; j++) {
 			lists[j] = array_malloc(el);
@@ -111,8 +107,8 @@ int main() {
 			printf("\n\tList %d after sorting : ", j);
 			array_print(lists[j]);
 		}
-		for(int j = 0;j < increment;j++) {
-			for(int k = 0;k < lists[j].count;k++) {
+		for(int j = 0; j < increment; j++) {
+			for(int k = 0; k < lists[j].count; k++) {
 				a.array[j + (k * increment)] = lists[j].array[k];
 			}
 		}

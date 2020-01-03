@@ -1,36 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
 
 /*
-	AVL tree is a special type of balanced BST where
-	each node has a balance factor of -1, 0 or +1 where
-	for a node N, balance factor is defined as 
-		balance(N) = height of the left subtree of N
-					- height of the right subtree of N
+    AVL tree is a special type of balanced BST where
+    each node has a balance factor of -1, 0 or +1 where
+    for a node N, balance factor is defined as
+        balance(N) = height of the left subtree of N
+                    - height of the right subtree of N
 */
 
 // To facilitate generalized input from the user
 // a value is represented using tagged structure.
-// The 'type' tag of a value determines the implementation 
+// The 'type' tag of a value determines the implementation
 // of the operations performed on it, i.e. print, comparison
 // and input.
 
 // Value type
-enum ValueType {
-	Number,
-	String
-};
+enum ValueType { Number, String };
 
 // Value structure
 typedef struct Value {
-	ValueType type;	// type of the value stored in the structure
-	union {		// union is used to reduce space usage, since for
-				// any Value variable, only one type of value will
-				// be present
-		double dval;	// double value
-		char *sval;		// string value, covers characters also
+	ValueType type;  // type of the value stored in the structure
+	union {          // union is used to reduce space usage, since for
+		             // any Value variable, only one type of value will
+		             // be present
+		double dval; // double value
+		char * sval; // string value, covers characters also
 	};
 } Value;
 
@@ -40,7 +37,7 @@ typedef struct Value {
 
 // Inputs a value from the stdin.
 // 'type' determines the type of value
-// to be read. 
+// to be read.
 // Returns the appropiate value packed
 // in a Value struct.
 Value value_input(ValueType type) {
@@ -49,14 +46,15 @@ Value value_input(ValueType type) {
 	char sinput[100]; // buffer for the string input
 	switch(type) {
 		case Number: scanf("%lf", &v.dval); break;
-		case String: scanf("%s", sinput); 
-					v.sval = strdup(sinput);
-					break;
+		case String:
+			scanf("%s", sinput);
+			v.sval = strdup(sinput);
+			break;
 	}
 	return v;
 }
 
-// Comapares between two Value structs. Since 
+// Comapares between two Value structs. Since
 // this function is called internally, it is assumed
 // that always the type of the values would be same.
 // Otherwise the behaviour is undefined.
@@ -70,7 +68,7 @@ Value value_input(ValueType type) {
 //			greater than v2
 int value_compare(Value v1, Value v2) {
 	switch(v1.type) {
-		// if both the values are numbers, 
+		// if both the values are numbers,
 		// compare them manually
 		case Number:
 			if(v1.dval == v2.dval)
@@ -80,8 +78,7 @@ int value_compare(Value v1, Value v2) {
 			return -1;
 		// otherwise call strcmp, as it handles
 		// the comparison with exact semantics
-		case String:
-			return strcmp(v1.sval, v2.sval);
+		case String: return strcmp(v1.sval, v2.sval);
 	}
 }
 
@@ -90,23 +87,24 @@ int value_compare(Value v1, Value v2) {
 char *rand_string(char *str, size_t size) {
 	// character set to be used in the generated
 	// string
-    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    if (size) {
-        --size;
-        // fill up the whole string
-        for (size_t n = 0; n < size; n++) {
-        	// generate a randpm integer between 0 and
-        	// size of the character set, which will point
-        	// to the index of the character in the 
-        	// character set to be stored in the buffer
-            int key = rand() % (int) (sizeof charset - 1);
-            // store the character in buffer
-            str[n] = charset[key];
-        }
-        // terminate the string
-        str[size] = '\0';
-    }
-    return str;
+	const char charset[] =
+	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	if(size) {
+		--size;
+		// fill up the whole string
+		for(size_t n = 0; n < size; n++) {
+			// generate a randpm integer between 0 and
+			// size of the character set, which will point
+			// to the index of the character in the
+			// character set to be stored in the buffer
+			int key = rand() % (int)(sizeof charset - 1);
+			// store the character in buffer
+			str[n] = charset[key];
+		}
+		// terminate the string
+		str[size] = '\0';
+	}
+	return str;
 }
 
 // Generates a random value of given 'type'
@@ -116,16 +114,16 @@ Value value_random(ValueType type) {
 	v.type = type;
 	switch(type) {
 		case Number:
-			// since rand() always returns an integer, 
+			// since rand() always returns an integer,
 			// the resulting number is divided by RAND_MAX,
-			// which converts it into a double between 0 and 
+			// which converts it into a double between 0 and
 			// 1, which is finally scaled up by a factor of
 			// 100, to generate a double between 0.0 and 100.0
-			v.dval = ((double)rand()/(double)(RAND_MAX)) * 100;
+			v.dval = ((double)rand() / (double)(RAND_MAX)) * 100;
 			break;
 		case String:
 			// allocates the buffer
-			v.sval = (char*)malloc(10);
+			v.sval = (char *)malloc(10);
 			// generates a random string
 			v.sval = rand_string(v.sval, 10);
 			break;
@@ -148,18 +146,18 @@ void value_print(Value v) {
 }
 
 // Structure containing AVL tree
-typedef struct Avl{
-	Value val; // value
-	struct Avl* left, *right; // pointers to the left and right subtrees
+typedef struct Avl {
+	Value       val;          // value
+	struct Avl *left, *right; // pointers to the left and right subtrees
 } Avl;
 
 // Allocates a new AVL node, and stores
 // 'val' inside it
-Avl* avl_new(Value val) {
-	Avl* node = (Avl*)malloc(sizeof(Avl));
+Avl *avl_new(Value val) {
+	Avl *node = (Avl *)malloc(sizeof(Avl));
 	// manually reset the left and right links
 	node->left = node->right = NULL;
-	node->val = val;
+	node->val                = val;
 	return node;
 }
 
@@ -188,7 +186,6 @@ void avl_rotate_left(Avl **head) {
 	*head = newhead;
 }
 
-
 // Rotate the head to right.
 // Initial tree :
 //	    A <- head
@@ -216,7 +213,7 @@ void avl_rotate_right(Avl **head) {
 
 // Prints a node and its children
 // recursively. 'level' denotes the
-// level of the node from the root, 
+// level of the node from the root,
 // which is used for indentation.
 void avl_print_rec(int level, Avl *head) {
 	printf("\n");
@@ -227,8 +224,7 @@ void avl_print_rec(int level, Avl *head) {
 	if(head == NULL) {
 		// no value to print
 		printf(" X");
-	}
-	else {
+	} else {
 		value_print(head->val);
 		// if both the children are empty, it
 		// is a leaf. So don't print two Xs in the
@@ -246,38 +242,39 @@ void avl_print(Avl *head) {
 	avl_print_rec(0, head);
 }
 
-// Since we do not really need either 
+// Since we do not really need either
 // the balance or the height of a node
-// except for adjust and reordering 
-// anyway, this structure packs the 
-// two of them together, so both of 
-// them can be returned from the same 
+// except for adjust and reordering
+// anyway, this structure packs the
+// two of them together, so both of
+// them can be returned from the same
 // function at the same time.
 typedef struct AvlInfo {
 	int height, balance;
 } AvlInfo;
 
 // This function checks a tree T whether
-// it is AVL or not by calcutating the 
+// it is AVL or not by calcutating the
 // balance factor of the node stored at
-// *head. 
+// *head.
 // address of the root stored at *head
 AvlInfo avl_check(Avl **head) {
 	if(*head == NULL) {
 		return (AvlInfo){0, 0};
 	}
-	
-	AvlInfo leftInfo = avl_check(&(*head)->left);
+
+	AvlInfo leftInfo  = avl_check(&(*head)->left);
 	AvlInfo rightInfo = avl_check(&(*head)->right);
-		
+
 	int balance = leftInfo.height - rightInfo.height;
-	int height = rightInfo.height > leftInfo.height ? rightInfo.height : leftInfo.height;
+	int height =
+	    rightInfo.height > leftInfo.height ? rightInfo.height : leftInfo.height;
 	height++;
-	
+
 	// After any type of corrective rotations,
-	// height decreases by 1, and the balance 
+	// height decreases by 1, and the balance
 	// becomes 0
-	
+
 	if(balance < -1) {
 		// the problem is in the right side
 		if(rightInfo.balance == -1) {
@@ -307,16 +304,15 @@ AvlInfo avl_check(Avl **head) {
 }
 
 void avl_insert(Avl **head, Value val) {
-	Avl **nhead = head;
-	int doNotInsert = 0;
+	Avl **nhead       = head;
+	int   doNotInsert = 0;
 	while(*nhead != NULL) {
 		int res = value_compare(val, (*nhead)->val);
 		if(res == -1) {
 			nhead = &(*nhead)->left;
 		} else if(res == 0) {
 			return;
-		}
-		else {
+		} else {
 			nhead = &(*nhead)->right;
 		}
 	}
@@ -328,31 +324,31 @@ AvlInfo avl_check_balance(Avl **head) {
 	if(*head == NULL) {
 		return (AvlInfo){0, 0};
 	}
-	
-	AvlInfo leftInfo = avl_check_balance(&(*head)->left);
+
+	AvlInfo leftInfo  = avl_check_balance(&(*head)->left);
 	AvlInfo rightInfo = avl_check_balance(&(*head)->right);
-		
+
 	int balance = leftInfo.height - rightInfo.height;
-	
+
 	if(balance < -1 || balance > 1) {
 		printf("\nError in node %d -> balance %d!", (*head)->val, balance);
 		exit(1);
 	}
-	
-	int height = rightInfo.height > leftInfo.height ? rightInfo.height : leftInfo.height;
+
+	int height =
+	    rightInfo.height > leftInfo.height ? rightInfo.height : leftInfo.height;
 	height++;
 	return (AvlInfo){height, balance};
 }
 
-Avl* avl_generate_random(int elements, ValueType type) {
+Avl *avl_generate_random(int elements, ValueType type) {
 	Avl *head = NULL;
 	srand(time(NULL));
-	while(elements--)
-		avl_insert(&head, value_random(type));
+	while(elements--) avl_insert(&head, value_random(type));
 	return head;
 }
 
-Avl** avl_inorder_successor(Avl **head) {
+Avl **avl_inorder_successor(Avl **head) {
 	Avl **inorder_successor = &((*head)->right);
 	while((*inorder_successor)->left != NULL) {
 		inorder_successor = &((*inorder_successor)->left);
@@ -363,9 +359,9 @@ Avl** avl_inorder_successor(Avl **head) {
 void avl_delete(Avl **head) {
 	if((*head)->right != NULL && (*head)->left != NULL) {
 		Avl **successor = avl_inorder_successor(head);
-		(*head)->val = (*successor)->val;
-		Avl *del = *successor;
-		(*successor) = (*successor)->right;
+		(*head)->val    = (*successor)->val;
+		Avl *del        = *successor;
+		(*successor)    = (*successor)->right;
 		free(del);
 	} else if((*head)->right != NULL || (*head)->left != NULL) {
 		Avl *replace = (*head)->right ? (*head)->right : (*head)->left;
@@ -394,20 +390,18 @@ int avl_delete_value(Avl **head, Value val) {
 	return 0;
 }
 
-Avl* avl_generate_user() {
-	Avl *head = NULL;
-	int el;
-	char c;
+Avl *avl_generate_user() {
+	Avl *     head = NULL;
+	int       el;
+	char      c;
 	ValueType type = Number;
 	printf("Enter number of elements : ");
 	scanf("%d", &el);
 	printf("Enter element type\n1. Number\n2. String : ");
 	scanf(" %c", &c);
 	switch(c) {
-		case '2':
-			type = String; break;
-		case '1':
-			type = Number; break;
+		case '2': type = String; break;
+		case '1': type = Number; break;
 		default:
 			printf("\n[Error] Wrong choice! Defaulting to Number!\n");
 			break;
