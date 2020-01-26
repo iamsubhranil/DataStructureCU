@@ -277,25 +277,26 @@ AvlInfo avl_check(Avl **head) {
 
 	if(balance < -1) {
 		// the problem is in the right side
-		if(rightInfo.balance == -1) {
-			// right high
-			avl_rotate_left(head);
-			return (AvlInfo){height - 1, 0};
-		} else if(rightInfo.balance == 1) {
+
+		if(rightInfo.balance == 1) {
 			// left high
 			avl_rotate_right(&(*head)->right);
 			avl_rotate_left(head);
 			return (AvlInfo){height - 1, 0};
+		} else {
+			// right high
+			avl_rotate_left(head);
+			return (AvlInfo){height - 1, 0};
 		}
 	} else if(balance > 1) {
-		// the problem is in the right side
-		if(leftInfo.balance == 1) {
-			// right high reverse
-			avl_rotate_right(head);
-			return (AvlInfo){height - 1, 0};
-		} else if(leftInfo.balance == -1) {
+		// the problem is in the left side
+		if(leftInfo.balance == -1) {
 			// left high reverse
 			avl_rotate_left(&(*head)->left);
+			avl_rotate_right(head);
+			return (AvlInfo){height - 1, 0};
+		} else {
+			// right high reverse
 			avl_rotate_right(head);
 			return (AvlInfo){height - 1, 0};
 		}
@@ -418,12 +419,14 @@ int main() {
 	avl_check_balance(&head);
 	printf("\nGenerated tree : ");
 	avl_print(head);
-	printf("\nEnter value to delete : ");
-	Value del = value_input(head->val.type);
-	if(avl_delete_value(&head, del)) {
-		printf("\nValue deleted successfully!");
-	} else {
-		printf("\nValue not found in the tree!");
+	while(1) {
+		printf("\nEnter value to delete : ");
+		Value del = value_input(head->val.type);
+		if(avl_delete_value(&head, del)) {
+			printf("\nValue deleted successfully!");
+		} else {
+			printf("\nValue not found in the tree!");
+		}
+		avl_print(head);
 	}
-	avl_print(head);
 }
