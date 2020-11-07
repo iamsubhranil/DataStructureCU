@@ -114,6 +114,27 @@ void ttn_update_lm_only(TwoThreeNode *node) {
 	}
 }
 
+void ttn_update_lm_only_internal(TwoThreeNode *node) {
+	// all nodes are mandatorily interal now
+	TwoThreeNode **children = node->children;
+	TwoThreeNode * max      = children[node->numchild - 1];
+	node->highestFromRight  = max->highestFromRight;
+	node->l                 = children[0]->highestFromRight;
+	node->m                 = children[1]->highestFromRight;
+}
+
+void ttn_update_lm_only_leaf(TwoThreeNode *node) {
+	TwoThreeNode **children = node->children;
+	TwoThreeNode * max      = children[node->numchild - 1];
+
+	// Highest value of rightmost subtree
+	node->highestFromRight = max->val;
+	// Highest value of the left subtree
+	node->l = children[0]->val;
+	// Highest value of the mid subtree
+	node->m = children[1]->val;
+}
+
 // This method iteratively updates the L M values
 // of all nodes in the path of the root of the
 // tree to the argument node.
@@ -154,7 +175,7 @@ void ttn_update_lm(TwoThreeNode *node) {
 // to the parent at an index one right to the
 // present node.
 void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent,
-                         TwoThreeNode *value, int pos) {
+                         TwoThreeNode *value, int pos, int is_last_level) {
 	// First, we check the number of children
 	// of parent
 	if(parent->numchild == 2) {
@@ -225,8 +246,13 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent,
 
 	// Then, we update the L and M values of parent
 	// and tmp_internal
-	ttn_update_lm_only(parent);
-	ttn_update_lm_only(tmp_internal);
+	if(is_last_level) {
+		ttn_update_lm_only_leaf(parent);
+		ttn_update_lm_only_leaf(tmp_internal);
+	} else {
+		ttn_update_lm_only_internal(parent);
+		ttn_update_lm_only_internal(tmp_internal);
+	}
 
 	// Now, we need add the tmp_internal node to the tree
 	if(parent->parent == NULL) {
@@ -255,7 +281,7 @@ void ttn_insert_internal(TwoThreeNode **root, TwoThreeNode *parent,
 		int i = 0;
 		while(parent->parent->children[i] != parent) i++;
 		// and insert 'tmp_internal' one right to it
-		ttn_insert_internal(root, parent->parent, tmp_internal, i + 1);
+		ttn_insert_internal(root, parent->parent, tmp_internal, i + 1, 0);
 		// and we're done.
 	}
 }
@@ -340,7 +366,7 @@ void ttn_insert(TwoThreeNode **root, int val) {
 		// Now we call ttn_insert_node_internal with
 		// trembling hands and pray to God that it
 		// does it's job correctly.
-		ttn_insert_internal(root, parent, ttn_create_leaf(val), pos);
+		ttn_insert_internal(root, parent, ttn_create_leaf(val), pos, 1);
 		// aaand hopefully we're done.
 	}
 }
@@ -360,7 +386,8 @@ void ttn_insert(TwoThreeNode **root, int val) {
 // bothered with deletion of a child in a
 // specific index of a parent, and its
 // consequences.
-void ttn_delete_internal(TwoThreeNode **root, TwoThreeNode *parent, int pos) {
+void ttn_delete_internal(TwoThreeNode **root, TwoThreeNode *parent, int pos,
+                         int is_last_level) {
 	// First release the child
 	free(parent->children[pos]);
 	parent->children[pos] = NULL;
@@ -416,9 +443,9 @@ void ttn_delete_internal(TwoThreeNode **root, TwoThreeNode *parent, int pos) {
 			}
 			// Now, we first delete the 'parent' from
 			// its parent, which is located at index 'pos'
-			ttn_delete_internal(root, parent->parent, pos);
+			ttn_delete_internal(root, parent->parent, pos, 0);
 			// Then, we perform insertion on uncle
-			ttn_insert_internal(root, uncle, leftover, toInsert);
+			ttn_insert_internal(root, uncle, leftover, toInsert, is_last_level);
 			// and we're done.
 		}
 	}
@@ -465,7 +492,7 @@ int ttn_delete(TwoThreeNode **root, int val) {
 		}
 		// 'val' found in children at 'pos' of
 		// 'parent'. Perform the deletion.
-		ttn_delete_internal(root, parent, pos);
+		ttn_delete_internal(root, parent, pos, 1);
 		return 1;
 	}
 }
