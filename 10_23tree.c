@@ -310,9 +310,18 @@ void ttn_insert(TwoThreeNode **root, int val) {
 		// Next, we determine the position of 'val'
 		// among the children of 'parent'
 		int pos = 0;
-		while(pos < 3 && parent->children[pos] != NULL &&
-		      parent->children[pos]->val < val) {
-			pos++;
+		if(parent->children[0] != NULL) {
+			if(parent->children[0]->val < val)
+				pos++;
+			if(parent->children[1] != NULL) {
+				if(parent->children[1]->val < val)
+					pos++;
+				if(parent->children[2] != NULL) {
+					if(parent->children[2]->val < val) {
+						pos++;
+					}
+				}
+			}
 		}
 		// Now we call ttn_insert_node_internal with
 		// trembling hands and pray to God that it
