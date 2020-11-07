@@ -124,14 +124,20 @@ void ttn_update_lm_only(TwoThreeNode *node) {
 void ttn_update_lm(TwoThreeNode *node) {
 	// children may be leaves
 	ttn_update_lm_only(node);
-	node = node->parent;
+	node        = node->parent;
+	int changed = 1;
 	while(node != NULL) {
 		// all nodes are mandatorily interal now
 		TwoThreeNode **children = node->children;
 		TwoThreeNode * max      = children[node->numchild - 1];
-		node->highestFromRight  = max->highestFromRight;
-		node->l                 = children[0]->highestFromRight;
-		node->m                 = children[1]->highestFromRight;
+		changed = (node->highestFromRight != max->highestFromRight) |
+		          (node->l != children[0]->highestFromRight) |
+		          (node->m != children[1]->highestFromRight);
+		if(!changed)
+			return;
+		node->highestFromRight = max->highestFromRight;
+		node->l                = children[0]->highestFromRight;
+		node->m                = children[1]->highestFromRight;
 		// Go for the parent
 		node = node->parent;
 	}
