@@ -312,13 +312,13 @@ void ttn_insert(TwoThreeNode **root, int val) {
 		int pos = 0;
 		if(parent->children[0] != NULL) {
 			if(parent->children[0]->val < val)
-				pos++;
+				pos = 1;
 			if(parent->children[1] != NULL) {
 				if(parent->children[1]->val < val)
-					pos++;
+					pos = 2;
 				if(parent->children[2] != NULL) {
 					if(parent->children[2]->val < val) {
-						pos++;
+						pos = 3;
 					}
 				}
 			}
@@ -432,16 +432,21 @@ int ttn_delete(TwoThreeNode **root, int val) {
 		TwoThreeNode *parent = ttn_search_parent(*root, val);
 		// check whether 'val' actually exists in a child of
 		// 'parent'
-		int pos = 0, found = 0;
-		while(pos < parent->numchild) {
-			if(parent->children[pos]->val == val) {
-				found = 1;
-				break;
+		int pos = -1;
+		if(parent->children[0]->val == val) {
+			pos = 0;
+		} else if(parent->children[1] != NULL) {
+			if(parent->children[1]->val == val) {
+				pos = 1;
+			} else if(parent->children[2] != NULL) {
+				if(parent->children[2]->val == val) {
+					pos = 2;
+				}
 			}
-			pos++;
 		}
+
 		// 'val' not found in any children of parent
-		if(!found) {
+		if(pos == -1) {
 			return 0;
 		}
 		// 'val' found in children at 'pos' of
